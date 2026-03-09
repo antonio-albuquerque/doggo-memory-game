@@ -33,6 +33,10 @@ button:hover {
   justify-content: space-between;
 }
 
+.header h1 span {
+  transition: color 0.3s ease;
+}
+
 .cardsGrid {
   display: flex;
   flex-wrap: wrap;
@@ -43,13 +47,50 @@ button:hover {
 .card {
   height: 120px;
   min-width: 70px;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
   margin: 5px;
+  perspective: 600px;
+  animation: cardDealIn 0.4s ease-out both;
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease-in-out;
   border: 4px solid whitesmoke;
   border-radius: 10px;
   box-shadow: 10px 10px 0px 0px rgba(0, 0, 0, 0.75);
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-inner.matched {
+  border-color: gold;
+  animation: matchPulse 0.5s ease-in-out;
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 6px;
+}
+
+.card-front {
+  z-index: 1;
+}
+
+.card-back {
+  transform: rotateY(180deg);
 }
 
 .check {
@@ -64,16 +105,22 @@ button:hover {
   bottom: 15px;
   right: 15px;
   box-shadow: 10px 10px 0px 0px rgba(0, 0, 0, 0.75);
+  animation: checkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .backdrop {
   display: flex;
   position: fixed;
+  top: 0;
+  left: 0;
   height: 100vh;
   width: 100%;
   justify-content: center;
   align-items: center;
   align-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+  animation: backdropFadeIn 0.4s ease-out both;
 }
 
 .endgame {
@@ -87,4 +134,57 @@ button:hover {
   justify-content: center;
   align-items: center;
   align-content: center;
+  animation: modalBounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes cardDealIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes matchPulse {
+  0% {
+    transform: rotateY(180deg) scale(1);
+  }
+  40% {
+    transform: rotateY(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotateY(180deg) scale(1);
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalBounceIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkPop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
 }

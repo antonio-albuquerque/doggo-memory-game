@@ -68,6 +68,7 @@ export const Game = () => {
   const [color, setColor] = useState('white');
   const [check, setCheck] = useState(false);
   const [count, setCount] = useState(0);
+  const [gameId, setGameId] = useState(0);
 
   const endGame = matchedDoggos.length === 16;
 
@@ -76,6 +77,7 @@ export const Game = () => {
     setTouched([]);
     setCount(0);
     setList(createDeck());
+    setGameId(prev => prev + 1);
   };
 
   const isAlreadyMatched = index =>
@@ -137,23 +139,25 @@ export const Game = () => {
           </strong>
         </h1>
       </div>
-      <div className="cardsGrid">
-        {list.map((image, index) => (
-          <div
-            key={index}
-            onClick={() => handleSelect({ index: index, code: image.code })}
-            className="card"
-            style={
-              touched.some(el => el.index === index) ||
-              isAlreadyMatched(index)
-                ? {
-                    backgroundImage: `url(${image.image})`,
-                    borderColor: isAlreadyMatched(index) ? 'gold' : 'white',
-                  }
-                : { backgroundImage: `url(${cardBackImg})` }
-            }
-          ></div>
-        ))}
+      <div className="cardsGrid" key={gameId}>
+        {list.map((image, index) => {
+          const isTouched = touched.some(el => el.index === index);
+          const isMatched = isAlreadyMatched(index);
+          const isFlipped = isTouched || isMatched;
+          return (
+            <div
+              key={index}
+              onClick={() => handleSelect({ index: index, code: image.code })}
+              className="card"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div className={`card-inner${isFlipped ? ' flipped' : ''}${isMatched ? ' matched' : ''}`}>
+                <div className="card-front" style={{ backgroundImage: `url(${cardBackImg})` }}></div>
+                <div className="card-back" style={{ backgroundImage: `url(${image.image})` }}></div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </>
   );
