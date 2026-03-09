@@ -8,10 +8,6 @@ function importAll(r) {
   return r.keys().map(r);
 }
 
-function random(mn, mx) {
-  return Math.random() * (mx - mn) + mn;
-}
-
 const images = importAll(
   require.context('../img', false, /\.(png|jpe?g|svg)$/)
 ).slice(0, 8);
@@ -21,34 +17,26 @@ const imagesWithCodes = images.map((el, index) => ({
   code: index,
 }));
 
-const doggoList = shuffle(imagesWithCodes.concat(imagesWithCodes));
-
 function shuffle(array) {
-  var currentIndex = array.length,
-    temporaryValue,
-    randomIndex;
-  while (0 !== currentIndex) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-
-  return array;
+  return shuffled;
 }
 
-const isMacth = touchedList =>
+const isMatch = touchedList =>
   touchedList[0].code === touchedList[1].code &&
   touchedList[0].index !== touchedList[1].index;
 
+const randomColor = () => colors[Math.floor(Math.random() * colors.length)];
+
 const Timer = ({ count, setCount, endGame }) => {
   useEffect(() => {
-    if (!endGame) {
-      setTimeout(() => {
-        setCount(count + 1000);
-      }, 1000);
-    }
+    if (endGame) return;
+    const id = setTimeout(() => setCount(count + 1000), 1000);
+    return () => clearTimeout(id);
   }, [count, endGame]);
 
   return <>{count / 1000}s</>;
@@ -66,26 +54,31 @@ const Backdrop = ({ open, count, handleGameStart }) =>
     </div>
   ) : null;
 
+const createDeck = () => shuffle(imagesWithCodes.concat(imagesWithCodes));
+
 export const Game = () => {
   const [touched, setTouched] = useState([]);
-  const [list, setList] = useState(doggoList);
+  const [list, setList] = useState(createDeck);
   const [matchedDoggos, setMatchedDoggos] = useState([]);
-  const [openBackdrop, setOpenBackdrop] = useState(false);
   const [color, setColor] = useState('white');
   const [check, setCheck] = useState(false);
-  const [endGame, setEndGame] = useState(false);
   const [count, setCount] = useState(0);
+
+  const endGame = matchedDoggos.length === 16;
 
   const handleGameStart = () => {
     setMatchedDoggos([]);
     setTouched([]);
-    setOpenBackdrop(false);
-    setEndGame(false);
     setCount(0);
-    setList(shuffle(doggoList));
+    setList(createDeck());
   };
 
+  const isAlreadyMatched = index =>
+    matchedDoggos.some(el => el.index === index);
+
   const handleSelect = ({ index, code }) => {
+    if (isAlreadyMatched(index)) return;
+
     const _touched = [...touched, { index, code }];
     if (_touched.length > 2) {
       setTouched([{ index, code }]);
@@ -96,36 +89,27 @@ export const Game = () => {
 
   useEffect(() => {
     if (touched.length === 2) {
-      if (isMacth(touched)) {
+      if (isMatch(touched)) {
         setCheck(true);
-        setMatchedDoggos([...matchedDoggos, touched].flat());
+        setMatchedDoggos([...matchedDoggos, ...touched]);
       }
     }
   }, [touched]);
 
   useEffect(() => {
-    if (check) {
-      setTimeout(() => setCheck(false), 800);
-    }
+    if (!check) return;
+    const id = setTimeout(() => setCheck(false), 800);
+    return () => clearTimeout(id);
   }, [check]);
 
   useEffect(() => {
-    setColor(colors[Math.floor(random(1, colors.length)) - 1]);
-    if (matchedDoggos.length === 16) {
-      setEndGame(true);
-    }
+    setColor(randomColor());
   }, [matchedDoggos]);
-
-  useEffect(() => {
-    if (endGame) {
-      setOpenBackdrop(true);
-    }
-  }, [endGame]);
 
   return (
     <>
       <Backdrop
-        open={openBackdrop}
+        open={endGame}
         count={count}
         handleGameStart={handleGameStart}
       />
@@ -137,7 +121,7 @@ export const Game = () => {
       <div className="header">
         <h1>
           Acertos:{' '}
-          <span style={{ color: color }}>
+          <span style={{ color }}>
             {matchedDoggos.length ? matchedDoggos.length / 2 : 0}/8
           </span>
         </h1>
@@ -151,17 +135,15 @@ export const Game = () => {
       <div className="cardsGrid">
         {list.map((image, index) => (
           <div
+            key={index}
             onClick={() => handleSelect({ index: index, code: image.code })}
             className="card"
             style={
-              touched.filter(el => el.index === index).length ||
-              matchedDoggos.filter(el => el.index === index).length
+              touched.some(el => el.index === index) ||
+              isAlreadyMatched(index)
                 ? {
                     backgroundImage: `url(${image.image})`,
-                    borderColor: matchedDoggos.filter(el => el.index === index)
-                      .length
-                      ? 'gold'
-                      : 'white',
+                    borderColor: isAlreadyMatched(index) ? 'gold' : 'white',
                   }
                 : { backgroundImage: `url(${cardBackImg})` }
             }
