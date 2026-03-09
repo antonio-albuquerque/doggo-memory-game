@@ -12,6 +12,11 @@ const images = importAll(
   require.context('../img', false, /\.(png|jpe?g|svg)$/)
 ).slice(0, 8);
 
+// Prefetch all card images into browser cache
+images.forEach(src => {
+  new Image().src = src;
+});
+
 const imagesWithCodes = images.map((el, index) => ({
   image: el,
   code: index,
